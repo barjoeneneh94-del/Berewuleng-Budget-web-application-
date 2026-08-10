@@ -110,6 +110,9 @@
     #expTable tbody td input, #expTable tbody td select{width:100%;text-align:left;padding:5px 4px;}
     #expTable tbody td.row-actions{padding-left:6px;justify-content:flex-end;gap:8px;}
     #expTable tbody td.row-actions::before{content:none;}
+    #expTable tbody tr.cat-group-row{background:transparent !important;border:none !important;box-shadow:none !important;margin-bottom:4px !important;padding:0 !important;}
+    #expTable tbody tr.cat-group-row td.cat-group-header{padding:10px 12px !important;min-height:0 !important;}
+    #expTable tbody tr.cat-group-row td.cat-group-header::before{content:none !important;}
   }
 
   /* Tabs */
@@ -141,6 +144,8 @@
   .card.balance{background:linear-gradient(135deg,var(--green),#2f6b40);border:none;color:#fff;}
   .card.balance .cat{color:rgba(255,255,255,0.85);}
   .card.balance .amt{color:#fff;font-size:19px;}
+  .card.low-stock{border-color:var(--red);background:#fdf1ee;}
+  .card.low-stock .cat{color:var(--red);}
 
   /* Table */
   .table-wrap{padding:18px 28px 6px;overflow-x:auto;}
@@ -154,6 +159,12 @@
   td input, td select{width:100%;border:1px solid transparent;background:transparent;font-family:'Inter',sans-serif;font-size:12.5px;padding:5px 5px;border-radius:6px;color:var(--ink);}
   td input:focus, td select:focus{outline:none;border:1px solid var(--red);background:#fff;}
   td input[type="number"]{text-align:right;font-weight:600;}
+  tr.cat-group-row{background:transparent;}
+  td.cat-group-header{padding:10px 12px !important;background:var(--cream);border:1px solid var(--line);border-radius:8px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;color:var(--ink);}
+  .cat-group-toggle{color:var(--red);font-size:11px;flex:none;}
+  .cat-group-name{font-weight:700;}
+  .cat-group-count{background:var(--red-dark);color:#fff;font-size:9px;padding:1px 7px;border-radius:999px;}
+  .cat-group-total{font-family:'Anton',sans-serif;letter-spacing:0.3px;font-size:12px;text-transform:none;}
   .row-actions{display:flex;gap:2px;}
   .icon-sm{background:none;border:none;cursor:pointer;color:#b9a8a5;font-size:14px;padding:3px 5px;border-radius:6px;}
   .icon-sm:hover{color:var(--red);background:#fbe9ea;}
@@ -232,7 +243,12 @@
     header{padding:20px 16px;}
     .club-name{font-size:19px;}
     .crest{width:48px;height:48px;}
-    .period-bar,.summary,.table-wrap,.grand-row,.signoff,.roster-panel,.reports-panel,.history-panel,.planned-panel{padding-left:16px;padding-right:16px;}
+    .period-bar,.summary,.table-wrap,.grand-row,.signoff,.roster-panel,.reports-panel,.history-panel,.planned-panel{padding-left:16px;padding-right:16px;padding-top:12px;padding-bottom:12px;}
+    .summary{margin-bottom:2px;}
+    .summary h2, .reports-panel h2{margin-bottom:6px !important;}
+    .budget-row{margin-bottom:6px;}
+    .grand-row{margin-top:4px;padding-top:14px;}
+    body{padding:14px 8px 70px;}
     table{font-size:11.5px;}
     .cards{grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:6px;}
     .card{padding:9px 10px;}
@@ -270,6 +286,7 @@
         <p class="tagline">Berewuleng FC — Victory Is Ours</p>
         <h1 class="club-name">Club Financial Record</h1>
         <div class="report-meta" id="reportMeta"></div>
+        <div class="report-meta" id="lastUpdatedStamp" style="opacity:0.75;"></div>
       </div>
       <div class="head-icons">
         <div class="icon-wrap">
@@ -299,7 +316,9 @@
         <span>Berewuleng FC</span>
       </div>
       <button class="side-btn active" data-tab="ledger" onclick="switchTab('ledger')">🧾 Ledger</button>
+      <button class="side-btn" data-tab="sales" onclick="switchTab('sales')">🎽 Sales</button>
       <button class="side-btn" data-tab="roster" onclick="switchTab('roster')">👥 Roster</button>
+      <button class="side-btn" data-tab="attendance" onclick="switchTab('attendance')">📋 Attendance</button>
       <button class="side-btn" data-tab="reports" onclick="switchTab('reports')">📊 Reports</button>
       <button class="side-btn" data-tab="history" onclick="switchTab('history')">📜 History</button>
     </nav>
@@ -377,6 +396,26 @@
     </div>
 
     <!-- ROSTER TAB -->
+    <!-- SALES TAB -->
+    <div class="tab-panel" id="tab-sales">
+      <div class="summary">
+        <h2>🎽 Jersey Stock</h2>
+        <div class="cards" id="stockCards"></div>
+        <button class="mini-btn" id="addStockBtn" style="margin-top:10px;" onclick="openAddStockModal()">+ Add Stock</button>
+      </div>
+      <div class="summary">
+        <h2>Sales Log</h2>
+        <div id="salesList" style="margin-top:8px;"></div>
+        <button class="add-row-btn" id="addSaleBtn" onclick="openAddSaleModal()">+ Add Sale</button>
+      </div>
+      <div class="summary">
+        <h2>Revenue</h2>
+        <div class="cards">
+          <div class="card total"><div class="cat">Total Jersey Revenue</div><div class="amt" id="salesRevenueTotal">D 0</div></div>
+        </div>
+      </div>
+    </div>
+
     <div class="tab-panel" id="tab-roster">
       <div class="roster-panel">
         <h2 style="font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-soft);">Players &amp; Staff</h2>
@@ -391,6 +430,19 @@
           </select>
           <button class="mini-btn" onclick="addRosterPerson()">+ Add</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE TAB -->
+    <div class="tab-panel" id="tab-attendance">
+      <div class="summary">
+        <h2>📋 Training Attendance</h2>
+        <button class="mini-btn" id="addSessionBtn" style="margin-bottom:10px;" onclick="openAddSessionModal()">+ New Session</button>
+        <div id="sessionList"></div>
+      </div>
+      <div class="summary">
+        <h2>Attendance Summary</h2>
+        <div id="attendanceSummary" style="margin-top:8px;"></div>
       </div>
     </div>
 
@@ -415,6 +467,21 @@
     <div class="tab-panel" id="tab-history">
       <div class="history-panel">
         <h2 style="font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-soft);">Change Log</h2>
+  </div>
+</div>
+
+<!-- New Training Session modal -->
+<div class="modal-overlay hidden" id="addSessionModal">
+  <div class="modal">
+    <h3>New Training Session</h3>
+    <div class="modal-label">Date</div>
+    <input type="date" id="sessionDate">
+    <div class="modal-label">Note (optional)</div>
+    <input type="text" id="sessionNote" placeholder="e.g. Evening fitness session">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal('addSessionModal')">Cancel</button>
+      <button class="modal-btn primary" onclick="confirmAddSession()">Create Session</button>
+    </div>
   </div>
 </div>
 
@@ -467,6 +534,55 @@
     <div class="modal-actions">
       <button class="modal-btn secondary" onclick="closeModal('newSeasonModal')">Cancel</button>
       <button class="modal-btn primary" style="background:var(--red-dark);" onclick="confirmNewSeason()">Archive &amp; Start New</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Stock modal -->
+<div class="modal-overlay hidden" id="addStockModal">
+  <div class="modal">
+    <h3>Add Jersey Stock</h3>
+    <div class="modal-label">Size</div>
+    <select id="stockSize">
+      <option value="S">S</option>
+      <option value="M">M</option>
+      <option value="L">L</option>
+      <option value="XL">XL</option>
+      <option value="XXL">XXL</option>
+    </select>
+    <div class="modal-label">Description (optional)</div>
+    <input type="text" id="stockDesc" placeholder="e.g. Home Jersey 2026">
+    <div class="modal-label">Quantity Received</div>
+    <input type="number" id="stockQty" placeholder="e.g. 20">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal('addStockModal')">Cancel</button>
+      <button class="modal-btn primary" onclick="confirmAddStock()">Add Stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Sale modal -->
+<div class="modal-overlay hidden" id="addSaleModal">
+  <div class="modal">
+    <h3>Record a Jersey Sale</h3>
+    <div class="modal-label">Size</div>
+    <select id="saleSize"></select>
+    <div class="modal-label">Buyer</div>
+    <select id="saleBuyer"></select>
+    <div class="modal-label">Quantity</div>
+    <input type="number" id="saleQty" value="1">
+    <div class="modal-label">Price Per Jersey (D)</div>
+    <input type="number" id="salePrice">
+    <div class="modal-label">Payment Method</div>
+    <select id="saleMethod">
+      <option value="Cash">💵 Cash</option>
+      <option value="Bank">🏦 Bank</option>
+      <option value="Orange Money">🟠 Orange Money</option>
+      <option value="Wave">🔵 Wave</option>
+    </select>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal('addSaleModal')">Cancel</button>
+      <button class="modal-btn primary" onclick="confirmAddSale()">Record Sale</button>
     </div>
   </div>
 </div>
@@ -575,6 +691,7 @@ async function saveState(){
   try{
     await fetch(WEBAPP_URL, {
       method:'POST',
+      mode:'no-cors',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ key:'club-data', value: JSON.stringify(STATE) })
     });
@@ -631,6 +748,9 @@ async function initApp(){
       periods: [{id:firstId, name:"CAF Qualifiers — August 2026", locked:false, budgets:{}}],
       entries: { [firstId]: seedEntries() },
       planned: { [firstId]: [] },
+      jerseyStock: { [firstId]: {S:0,M:0,L:0,XL:0,XXL:0} },
+      sales: { [firstId]: [] },
+      trainingSessions: { [firstId]: [] },
       roster: [],
       changelog: [{ts:new Date().toISOString(), text:"Club financial system created."}]
     };
@@ -640,8 +760,17 @@ async function initApp(){
     STATE = state;
     STATE.roster = STATE.roster || [];
     STATE.planned = STATE.planned || {};
+    STATE.jerseyStock = STATE.jerseyStock || {};
+    STATE.sales = STATE.sales || {};
+    STATE.trainingSessions = STATE.trainingSessions || {};
     STATE.changelog = STATE.changelog || [];
-    STATE.periods.forEach(p=>{ p.budgets = p.budgets || {}; p.locked = p.locked || false; });
+    STATE.periods.forEach(p=>{
+      p.budgets = p.budgets || {};
+      p.locked = p.locked || false;
+      STATE.jerseyStock[p.id] = STATE.jerseyStock[p.id] || {S:0,M:0,L:0,XL:0,XXL:0};
+      STATE.sales[p.id] = STATE.sales[p.id] || [];
+      STATE.trainingSessions[p.id] = STATE.trainingSessions[p.id] || [];
+    });
   }
   $('loadingScreen').classList.add('hidden');
   $('codeInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
@@ -693,12 +822,14 @@ function switchTab(name){
   document.querySelectorAll('.side-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   $('tab-'+name).classList.add('active');
-  const titles = {ledger:'Ledger', roster:'Roster', reports:'Reports', history:'History'};
+  const titles = {ledger:'Ledger', sales:'Sales', roster:'Roster', attendance:'Attendance', reports:'Reports', history:'History'};
   $('topbarTitle').textContent = titles[name] || name;
   toggleSidebar(false);
   if(name==='reports') renderReports();
   if(name==='history') renderHistory();
   if(name==='roster') renderRoster();
+  if(name==='sales') renderSales();
+  if(name==='attendance') renderAttendance();
 }
 function toggleSidebar(open){
   $('sidebarNav').classList.toggle('open', open);
@@ -718,6 +849,8 @@ function renderAll(){
   const period = STATE.periods.find(p=>p.id===currentPeriodId);
   const meta = `Report ${period ? period.id.slice(-6).toUpperCase() : ''} · Generated ${new Date().toLocaleString()}`;
   $('reportMeta').textContent = meta;
+  const lastEntry = (STATE.changelog||[])[0];
+  $('lastUpdatedStamp').textContent = lastEntry ? `Last updated ${timeAgo(lastEntry.ts)}` : '';
   const lockBtn = $('lockPeriodBtn');
   if(lockBtn && period){
     lockBtn.textContent = period.locked ? '🔓 Unlock Record' : '🔒 Lock Record (Finalize)';
@@ -803,6 +936,8 @@ function rosterOptions(selected){
 
 function getEntries(){ return STATE.entries[currentPeriodId] || []; }
 
+let collapsedCats = new Set();
+let collapsedCatsPeriod = null;
 function renderTable(){
   const tbody = $('tbody');
   tbody.innerHTML = '';
@@ -814,7 +949,33 @@ function renderTable(){
     if(!q) return true;
     return (r.desc||'').toLowerCase().includes(q) || (r.category||'').toLowerCase().includes(q) || (r.paidFor||'').toLowerCase().includes(q);
   });
-  rows.forEach(r=>{
+
+  const catOrder = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].map(c=>c.name);
+  const groups = {};
+  rows.forEach(r=>{ (groups[r.category] = groups[r.category] || []).push(r); });
+
+  if(collapsedCatsPeriod !== currentPeriodId){
+    collapsedCats = new Set(Object.keys(groups));
+    collapsedCatsPeriod = currentPeriodId;
+  }
+  const effectiveCollapsed = q ? new Set() : collapsedCats;
+  const orderedCats = Object.keys(groups).sort((a,b)=> catOrder.indexOf(a) - catOrder.indexOf(b));
+
+  orderedCats.forEach(cat=>{
+    const list = groups[cat];
+    const total = list.reduce((s,r)=> s + (r.type==='income' ? Number(r.amount||0) : -Number(r.amount||0)), 0);
+    const isCollapsed = effectiveCollapsed.has(cat);
+    const groupTr = document.createElement('tr');
+    groupTr.className = 'cat-group-row';
+    groupTr.innerHTML = `<td colspan="10" class="cat-group-header" onclick="toggleCategoryGroup('${cat.replace(/'/g,"\\'")}')">
+      <span class="cat-group-toggle">${isCollapsed?'▸':'▾'}</span>
+      <span class="cat-group-name">${cat}</span>
+      <span class="cat-group-count">${list.length}</span>
+      <span class="cat-group-total" style="color:${total<0?'var(--red)':'var(--green,#2E9C8C)'};margin-left:auto;">${total<0?'-':'+'}D ${fmt(Math.abs(total))}</span>
+    </td>`;
+    tbody.appendChild(groupTr);
+    if(isCollapsed) return;
+    list.forEach(r=>{
     const tr = document.createElement('tr');
     tr.className = r.type==='income' ? 'income-row' : '';
     const disabled = (locked || !isM) ? 'disabled' : '';
@@ -852,9 +1013,14 @@ function renderTable(){
         el.addEventListener('change', ()=>{ updateRowFromEl(r.id, tr); });
       });
     }
+    });
   });
   recalcCards();
   renderLedgerReimbStrip();
+}
+function toggleCategoryGroup(cat){
+  if(collapsedCats.has(cat)) collapsedCats.delete(cat); else collapsedCats.add(cat);
+  renderTable();
 }
 function renderLedgerReimbStrip(){
   const owed = getEntries().filter(r=>r.isReimbursement && !r.reimbursementSettled);
@@ -945,6 +1111,16 @@ function fmt(n){
   n = parseFloat(n)||0;
   return n.toLocaleString(undefined,{minimumFractionDigits:0, maximumFractionDigits:2});
 }
+function timeAgo(ts){
+  const diffMs = Date.now() - new Date(ts).getTime();
+  const mins = Math.floor(diffMs/60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return `${mins} min${mins===1?'':'s'} ago`;
+  const hrs = Math.floor(mins/60);
+  if(hrs < 24) return `${hrs} hour${hrs===1?'':'s'} ago`;
+  const days = Math.floor(hrs/24);
+  return `${days} day${days===1?'':'s'} ago`;
+}
 
 function recalcCards(){
   const totals = {};
@@ -998,6 +1174,158 @@ function deletePlanned(id){
   const arr = getPlanned();
   const idx = arr.findIndex(x=>x.id===id);
   if(idx>=0){ arr.splice(idx,1); saveState(); renderPlanned(); }
+}
+
+/* ---- Jersey Sales ---- */
+function getStock(){ STATE.jerseyStock[currentPeriodId] = STATE.jerseyStock[currentPeriodId] || {S:0,M:0,L:0,XL:0,XXL:0}; return STATE.jerseyStock[currentPeriodId]; }
+function getSales(){ STATE.sales[currentPeriodId] = STATE.sales[currentPeriodId] || []; return STATE.sales[currentPeriodId]; }
+function renderSales(){
+  const isM = currentRole==='management';
+  const stock = getStock();
+  $('addStockBtn').style.display = isM ? '' : 'none';
+  $('addSaleBtn').style.display = isM ? '' : 'none';
+  $('stockCards').innerHTML = Object.keys(stock).map(size=>`
+    <div class="card${stock[size]<=2 ? ' low-stock' : ''}">
+      <div class="cat">Size ${size}${stock[size]<=2 ? ' ⚠' : ''}</div>
+      <div class="amt">${stock[size]}</div>
+    </div>
+  `).join('');
+  const sales = getSales();
+  $('salesList').innerHTML = sales.length ? sales.slice().reverse().map(s=>`
+    <div class="budget-row">
+      <div class="bl">
+        <span class="cat-label">${s.size} · ${s.desc || 'Jersey'} — ${s.buyer || 'Walk-in'} (x${s.qty})</span>
+        <span>D ${fmt(s.qty * s.price)}</span>
+      </div>
+      <div style="font-size:10.5px;color:var(--ink-soft);margin-top:2px;">${s.date || ''} · ${s.method || 'Cash'}</div>
+    </div>
+  `).join('') : '<p style="color:var(--ink-soft);font-size:13px;">No sales recorded yet.</p>';
+  const total = sales.reduce((sum,s)=> sum + (Number(s.qty||0) * Number(s.price||0)), 0);
+  $('salesRevenueTotal').textContent = 'D ' + fmt(total);
+}
+function openAddStockModal(){
+  if(currentRole!=='management') return;
+  $('stockQty').value = '';
+  $('stockDesc').value = '';
+  $('addStockModal').classList.remove('hidden');
+}
+function confirmAddStock(){
+  const size = $('stockSize').value;
+  const desc = $('stockDesc').value.trim();
+  const qty = Number($('stockQty').value);
+  if(!qty || qty <= 0){ alert('Enter a quantity greater than 0.'); return; }
+  const stock = getStock();
+  stock[size] = (stock[size]||0) + qty;
+  logChange(`🎽 Stock added — ${qty} × Size ${size}${desc ? ' ('+desc+')' : ''}.`);
+  saveState();
+  closeModal('addStockModal');
+  renderSales();
+}
+function openAddSaleModal(){
+  if(currentRole!=='management') return;
+  const stock = getStock();
+  $('saleSize').innerHTML = Object.keys(stock).map(s=>`<option value="${s}">${s} — ${stock[s]} in stock</option>`).join('');
+  $('saleBuyer').innerHTML = rosterOptions('');
+  $('saleQty').value = 1;
+  $('salePrice').value = '';
+  $('addSaleModal').classList.remove('hidden');
+}
+function confirmAddSale(){
+  const size = $('saleSize').value;
+  const buyer = $('saleBuyer').value;
+  const qty = Number($('saleQty').value);
+  const price = Number($('salePrice').value);
+  const method = $('saleMethod').value;
+  if(!qty || qty<=0){ alert('Enter a quantity greater than 0.'); return; }
+  if(!price || price<=0){ alert('Enter a price per jersey.'); return; }
+  const stock = getStock();
+  if((stock[size]||0) < qty){
+    if(!confirm(`Only ${stock[size]||0} left in size ${size}. Record this sale anyway?`)) return;
+  }
+  stock[size] = Math.max(0, (stock[size]||0) - qty);
+  const today = new Date().toISOString().slice(0,10);
+  getSales().push({ id: makeId(), date: today, size, buyer, qty, price, method });
+  getEntries().push({
+    id: makeId(), date: today, desc: `Jersey sale — Size ${size} x${qty}`,
+    category: 'Jersey Sales', paidFor: buyer, amount: qty*price, type:'income',
+    currency:'GMD', method, isReimbursement:false, reimbursementSettled:false, ts:new Date().toISOString()
+  });
+  logChange(`🎽 Sale recorded — ${qty} × Size ${size} to ${buyer||'walk-in'} for D ${fmt(qty*price)}.`);
+  saveState();
+  closeModal('addSaleModal');
+  renderSales();
+  renderTable();
+}
+
+/* ---- Training Attendance ---- */
+function getSessions(){ STATE.trainingSessions[currentPeriodId] = STATE.trainingSessions[currentPeriodId] || []; return STATE.trainingSessions[currentPeriodId]; }
+let expandedSessions = new Set();
+function renderAttendance(){
+  const isM = currentRole==='management';
+  const sessions = getSessions();
+  const roster = STATE.roster || [];
+  $('addSessionBtn').style.display = isM ? '' : 'none';
+  $('sessionList').innerHTML = sessions.length ? sessions.slice().reverse().map(s=>{
+    const presentCount = roster.filter(p=>s.attendance && s.attendance[p.id]).length;
+    const isOpen = expandedSessions.has(s.id);
+    return `
+    <div class="budget-row">
+      <div class="bl" style="cursor:pointer;" onclick="toggleSessionOpen('${s.id}')">
+        <span class="cat-label">${s.date || '(no date)'} ${s.note ? '— '+s.note : ''}</span>
+        <span>${presentCount}/${roster.length} present</span>
+      </div>
+      ${isOpen ? `<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        ${roster.length ? roster.map(p=>`
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <input type="checkbox" ${s.attendance && s.attendance[p.id] ? 'checked' : ''} ${isM?'':'disabled'} onchange="toggleAttendance('${s.id}','${p.id}',this.checked)">
+            ${p.name} <span style="color:var(--ink-soft);font-size:10.5px;text-transform:uppercase;">${p.role||''}</span>
+          </label>
+        `).join('') : '<span style="color:var(--ink-soft);font-size:12.5px;">No roster members yet — add players in the Roster tab.</span>'}
+      </div>` : ''}
+    </div>
+  `; }).join('') : '<p style="color:var(--ink-soft);font-size:13px;">No training sessions recorded yet.</p>';
+
+  $('attendanceSummary').innerHTML = roster.length ? roster.map(p=>{
+    const total = sessions.length;
+    const present = sessions.filter(s=>s.attendance && s.attendance[p.id]).length;
+    const pct = total ? Math.round((present/total)*100) : 0;
+    return `
+    <div class="budget-row">
+      <div class="bl"><span class="cat-label">${p.name}</span><span>${present}/${total} (${pct}%)</span></div>
+    </div>`;
+  }).join('') : '<p style="color:var(--ink-soft);font-size:13px;">Add players to the Roster to see attendance stats.</p>';
+}
+function toggleSessionOpen(id){
+  if(expandedSessions.has(id)) expandedSessions.delete(id); else expandedSessions.add(id);
+  renderAttendance();
+}
+function toggleAttendance(sessionId, personId, checked){
+  const s = getSessions().find(x=>x.id===sessionId);
+  if(!s) return;
+  s.attendance = s.attendance || {};
+  s.attendance[personId] = checked;
+  const person = (STATE.roster||[]).find(p=>p.id===personId);
+  logChange(`📋 Attendance — ${person?person.name:'someone'} marked ${checked?'present':'absent'} for ${s.date}.`);
+  saveState();
+  renderAttendance();
+}
+function openAddSessionModal(){
+  if(currentRole!=='management') return;
+  $('sessionDate').value = new Date().toISOString().slice(0,10);
+  $('sessionNote').value = '';
+  $('addSessionModal').classList.remove('hidden');
+}
+function confirmAddSession(){
+  const date = $('sessionDate').value;
+  const note = $('sessionNote').value.trim();
+  if(!date){ alert('Pick a date for this session.'); return; }
+  const id = makeId();
+  getSessions().push({ id, date, note, attendance: {} });
+  expandedSessions.add(id);
+  logChange(`📋 Training session created — ${date}${note?' ('+note+')':''}.`);
+  saveState();
+  closeModal('addSessionModal');
+  renderAttendance();
 }
 
 /* ---- Roster ---- */
@@ -1137,6 +1465,9 @@ async function confirmNewSeason(){
   STATE.periods.push({id, name, locked:false, budgets:{}});
   STATE.entries[id] = [];
   STATE.planned[id] = [];
+  STATE.jerseyStock[id] = {S:0,M:0,L:0,XL:0,XXL:0};
+  STATE.sales[id] = [];
+  STATE.trainingSessions[id] = [];
   logChange(`🔄 New season started — "${oldPeriod ? oldPeriod.name : 'previous record'}" archived and locked. New record: "${name}".`);
   await saveState();
   closeModal('newSeasonModal');
@@ -1152,6 +1483,9 @@ async function createPeriod(){
   STATE.periods.push({id, name, locked:false, budgets:{}});
   STATE.entries[id] = [];
   STATE.planned[id] = [];
+  STATE.jerseyStock[id] = {S:0,M:0,L:0,XL:0,XXL:0};
+  STATE.sales[id] = [];
+  STATE.trainingSessions[id] = [];
   logChange(`New record "${name}" created.`);
   await saveState();
   closeModal('newPeriodModal');
